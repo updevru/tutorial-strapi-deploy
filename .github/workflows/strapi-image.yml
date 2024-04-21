@@ -27,6 +27,6 @@ jobs:
       - name: Build and push from mater
         uses: docker/build-push-action@v5
         with:
-          context: ./strapi/
+          context: strapi/
           push: true
           tags: updev/strapi:latest
