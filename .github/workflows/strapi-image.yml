@@ -11,9 +11,6 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: strapi
     steps:
       - uses: actions/checkout@v4
 
@@ -32,5 +29,6 @@ jobs:
       - name: Build and push from mater
         uses: docker/build-push-action@v5
         with:
+          context: ./strapi
           push: true
           tags: updev/strapi:latest
