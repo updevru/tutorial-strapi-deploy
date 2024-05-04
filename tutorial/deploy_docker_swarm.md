@@ -77,7 +77,7 @@ services:
 
 Что и как запускать описывается в уже знакомом формате docker-compose.yaml.
 
-Пример [docker-compose.yaml файла](./../docker-swarm/docker-compose.yaml).
+Пример [docker-compose.yaml](./../docker-swarm/docker-compose.yaml).
 
 В нем описаны:
 - Прокси сервис - Traefik
@@ -100,7 +100,7 @@ docker stack deploy --compose-file ./docker-swarm/docker-compose.yaml strapi
 
 ## Обновление сервиса
 
-Для обновления какого либо сервиса достаточно выполнить такую же команду.
+Для обновления какого либо сервиса достаточно выполнить такую же команду, как и при запуске.
 
 Сервисы обновятся только те, у которых:
 - изменилась конфигурация в docker-compose.yaml
