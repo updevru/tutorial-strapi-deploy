@@ -1,0 +1,99 @@
+services:
+  proxy:
+    image: traefik:v2.9
+    ports:
+      - "80:80"
+      - "443:443"
+    networks:
+      - global
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - proxy-acme:/acme
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.swarmMode=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--certificatesresolvers.default.acme.httpchallenge=true"
+      - "--certificatesresolvers.default.acme.httpchallenge.entrypoint=web"
+      - "--certificatesresolvers.default.acme.email=notify@email.ru"
+      - "--certificatesresolvers.default.acme.storage=/acme/acme.json"
+    deploy:
+      mode: replicated
+      replicas: 1
+      update_config:
+        parallelism: 2
+        delay: 15s
+        order: start-first
+
+  postgres:
+    image: postgres:16.2
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - global
+    environment:
+      TZ: "Europe/Moscow"
+      POSTGRES_DB: strapi
+      POSTGRES_USER: strapi
+      POSTGRES_PASSWORD: strapi
+    deploy:
+      mode: replicated
+      replicas: 1
+      update_config:
+        parallelism: 1
+        order: stop-first
+
+  strapi:
+    image: updev/strapi
+    networks:
+      - global
+    environment:
+      APP_URL: "https://strapi.project.ru"
+      APP_KEYS: 33h8bQmgX7sRpIFzEAYSiA==,jn0G/M0akKqWgq73iC+n4w==,o7ZmUZONopLPZiwuoRJ9XA==,hU+7Ra9xwrN+7ZtWXeO+7g==
+      API_TOKEN_SALT: K/QGU......3Gw==
+      ADMIN_JWT_SECRET: 1PI.....Gvw==
+      TRANSFER_TOKEN_SALT: ni......hA==
+      DATABASE_CLIENT: postgres
+      DATABASE_HOST: postgres
+      DATABASE_PORT: 5432
+      DATABASE_NAME: strapi
+      DATABASE_USERNAME: strapi
+      DATABASE_PASSWORD: strapi
+      YC_BUCKET: strapi-data
+      YC_ACCESS_KEY_ID: YC....Yk
+      YC_ACCESS_SECRET: YCO....LyaE
+      JWT_SECRET: 0wd.....tGKg==
+    depends_on:
+      - postgres
+    deploy:
+      labels:
+        - traefik.enable=true
+        - traefik.docker.network=cluster-network
+        - traefik.http.routers.strapi.rule=Host(`strapi.project.ru`)
+        - traefik.http.services.strapi.loadbalancer.server.port=1337
+        - traefik.http.routers.strapi.entrypoints=websecure
+        - traefik.http.routers.strapi.tls.certresolver=default
+      mode: replicated
+      replicas: 1
+      update_config:
+        parallelism: 2
+        delay: 60s
+        order: start-first
+        failure_action: rollback
+      restart_policy:
+        condition: on-failure
+        delay: 15s
+
+volumes:
+  postgres-data:
+  proxy-acme:
+
+networks:
+  global:
+    external: true
+    name: cluster-network
